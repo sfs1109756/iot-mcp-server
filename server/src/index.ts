@@ -47,8 +47,10 @@ async function main() {
 
   if (useDashboard) {
     const port = Number(process.env.PORT ?? 3003);
+    // Local-only by default; set HOST=0.0.0.0 (and AUTH_TOKEN) to reach it from other machines.
+    const host = process.env.HOST ?? '127.0.0.1';
     const app = createDashboard(adapter, rules);
-    const httpServer = app.listen(port, () => {
+    const httpServer = app.listen(port, host, () => {
       log(`Dashboard:       http://localhost:${port}`);
       log(`HTTP MCP server: http://localhost:${port}/mcp`);
     });

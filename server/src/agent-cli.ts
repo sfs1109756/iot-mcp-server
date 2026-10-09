@@ -19,12 +19,14 @@ import { getModel, getProvider } from './llm.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT ?? 3003);
+/** Sends AUTH_TOKEN when the server requires one. */
+const authHeaders = (): RequestInit => (process.env.AUTH_TOKEN ? { headers: { authorization: `Bearer ${process.env.AUTH_TOKEN}` } } : {});
 const c = { dim: '\x1b[2m', cyan: '\x1b[36m', green: '\x1b[32m', red: '\x1b[31m', bold: '\x1b[1m', reset: '\x1b[0m' };
 
 async function connect(): Promise<{ client: Client; via: string }> {
   const client = new Client({ name: 'iot-cli-agent', version: '1.0.0' });
   try {
-    const transport = new StreamableHTTPClientTransport(new URL(`http://localhost:${port}/mcp`));
+    const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`), { requestInit: authHeaders() });
     await client.connect(transport);
     return { client, via: `HTTP (http://localhost:${port}/mcp — watch the dashboard!)` };
   } catch {

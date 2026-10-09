@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import mqtt from 'mqtt';
 import { after, before, test } from 'node:test';
 import { runMqttSimulator } from '../mqtt-sim.js';
 import { startEmbeddedBroker } from './broker.js';
@@ -44,4 +45,22 @@ test('commands are delivered and acknowledged', async () => {
   const wrong = await adapter.send('pur-office-01', { type: 'set_fan_speed', speed: 10 });
   assert.equal(wrong.ok, false);
   assert.match(wrong.message, /not a ventilation fan/);
+});
+
+test('the built-in broker enforces MQTT_USERNAME / MQTT_PASSWORD when set', async () => {
+  process.env.MQTT_USERNAME = 'esp';
+  process.env.MQTT_PASSWORD = 'pw';
+  const secured = await startEmbeddedBroker(0);
+  delete process.env.MQTT_USERNAME;
+  delete process.env.MQTT_PASSWORD;
+  const tryConnect = (opts: mqtt.IClientOptions) =>
+    new Promise<boolean>((resolve) => {
+      const c = mqtt.connect(`mqtt://127.0.0.1:${secured.port}`, { ...opts, reconnectPeriod: 0, connectTimeout: 2000 });
+      c.once('connect', () => (c.end(true), resolve(true)));
+      c.once('error', () => (c.end(true), resolve(false)));
+    });
+  assert.equal(await tryConnect({}), false);
+  assert.equal(await tryConnect({ username: 'esp', password: 'nope' }), false);
+  assert.equal(await tryConnect({ username: 'esp', password: 'pw' }), true);
+  await secured.close();
 });

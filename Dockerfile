@@ -10,7 +10,7 @@ RUN npm --prefix server run build && npm --prefix client run build && npm --pref
 
 FROM node:22-slim
 WORKDIR /app
-ENV NODE_ENV=production PORT=3003
+ENV NODE_ENV=production PORT=3003 HOST=0.0.0.0
 COPY --from=build /app/server/package.json server/package.json
 COPY --from=build /app/server/node_modules server/node_modules
 COPY --from=build /app/server/dist server/dist

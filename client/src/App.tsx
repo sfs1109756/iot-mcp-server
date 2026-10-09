@@ -2,15 +2,39 @@ import { AiStatus, useHealth } from './components/AiStatus';
 import { AgentChat } from './components/AgentChat';
 import { DeviceCard } from './components/DeviceCard';
 import { RulesPanel } from './components/RulesPanel';
+import { saveToken } from './auth';
 import { useLive } from './useLive';
 
 const SOURCE_LABEL = { mcp: 'MCP client', agent: 'Agent', dashboard: 'You', rule: 'Rule', system: 'System' } as const;
 
 export default function App() {
   const health = useHealth();
-  const { devices, alerts, activity, rules, connected } = useLive();
+  const { devices, alerts, activity, rules, connected, needsToken } = useLive();
 
   const rooms = [...new Set(devices.map((d) => d.room))];
+
+  if (needsToken) {
+    return (
+      <div className="app">
+        <form
+          className="panel crash"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const value = new FormData(e.currentTarget).get('token');
+            if (typeof value === 'string' && value.trim()) {
+              saveToken(value.trim());
+              window.location.reload();
+            }
+          }}
+        >
+          <h2>🔒 Access token needed</h2>
+          <p className="muted">This server was started with AUTH_TOKEN. Enter it to control the devices.</p>
+          <input name="token" type="password" autoFocus placeholder="Token" aria-label="Access token" />
+          <button style={{ marginTop: 10 }}>Unlock</button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="app wide">
@@ -76,7 +100,8 @@ export default function App() {
           <div className="panel small">
             <h2>🔌 Connect an MCP client</h2>
             <p className="muted">
-              HTTP endpoint: <code>{window.location.origin.replace(/:\d+$/, ':3003')}/mcp</code>
+              HTTP endpoint: <code>{window.location.origin.replace(/:\d+$/, ':3003')}/mcp</code> (send <code>Authorization: Bearer …</code>{' '}
+              if the server uses AUTH_TOKEN)
             </p>
             <p className="muted">Claude Desktop / Claude Code (stdio): see the README for the config snippet.</p>
           </div>

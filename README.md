@@ -138,6 +138,10 @@ Devices that miss 3 polls are marked offline, and commands to them are refused.
 
 ## Safety
 
+- **Local by default:** the dashboard and HTTP MCP endpoint listen on `127.0.0.1` only. To reach them from other machines set `HOST=0.0.0.0` **and** `AUTH_TOKEN=<long random string>`.
+- **Token auth:** with `AUTH_TOKEN` set, `/api/*` and `/mcp` require `Authorization: Bearer <token>` (the dashboard asks for it once, or open `/?token=…`). `/api/health` stays public. Compared in constant time.
+- **MQTT credentials:** the built-in broker listens on your network so devices can reach it; set `MQTT_USERNAME` and `MQTT_PASSWORD` and every client (devices, simulator and this server) must log in.
+
 - Every command is validated against the device type and online state; wrong-type or offline commands return MCP errors the model can read and recover from.
 - Read tools are annotated `readOnlyHint`; control tools are idempotent and non-destructive.
 - Every action is recorded in the activity log with its source (MCP client, agent, dashboard) and the model's stated reason.

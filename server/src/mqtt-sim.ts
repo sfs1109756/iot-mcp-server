@@ -21,6 +21,8 @@ export async function runMqttSimulator(
   const clients = sim.list().map((d) => {
     const client = mqtt.connect(url, {
       clientId: `sim-${d.id}`,
+      username: process.env.MQTT_USERNAME || undefined,
+      password: process.env.MQTT_PASSWORD || undefined,
       will: { topic: `${prefix}/${d.id}/online`, payload: Buffer.from('false'), retain: true, qos: 1 },
     });
     const publish = () => {

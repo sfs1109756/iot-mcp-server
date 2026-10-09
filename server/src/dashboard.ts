@@ -1,7 +1,8 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { Express } from 'express';
+import type { Express, RequestHandler } from 'express';
+import { timingSafeEqual } from 'node:crypto';
 import { activity } from './activity.js';
 import { runAgent, type AgentEvent } from './agent.js';
 import { computeAlerts } from './devices/alerts.js';
@@ -11,12 +12,30 @@ import { createMcpServer } from './mcp.js';
 import type { NewRule, RuleEngine } from './rules.js';
 
 /**
+ * Optional shared-secret auth (AUTH_TOKEN). When set, /api/* (except /api/health) and /mcp
+ * need "Authorization: Bearer <token>" — or ?token= for the browser's EventSource stream.
+ * Strongly recommended with real devices or HOST=0.0.0.0, since these endpoints control hardware.
+ */
+export function requireToken(token: string | undefined): RequestHandler {
+  const expected = token ? Buffer.from(token) : null;
+  return (req, res, next) => {
+    if (!expected) return next();
+    const header = req.headers.authorization;
+    const given = header?.startsWith('Bearer ') ? header.slice(7) : typeof req.query.token === 'string' ? req.query.token : '';
+    const buf = Buffer.from(given);
+    if (buf.length === expected.length && timingSafeEqual(buf, expected)) return next();
+    res.status(401).json({ error: 'This dashboard needs an access token.', needsToken: true });
+  };
+}
+
+/**
  * Web dashboard + HTTP MCP endpoint, sharing the same devices as the stdio MCP server.
  *   /api/*  dashboard data, manual controls, live stream (SSE), agent chat
  *   /mcp    Streamable HTTP MCP endpoint for HTTP-capable MCP clients
  */
-export function createDashboard(adapter: DeviceAdapter, rules?: RuleEngine): Express {
-  const app = createApp();
+export function createDashboard(adapter: DeviceAdapter, rules?: RuleEngine, token = process.env.AUTH_TOKEN): Express {
+  const app = createApp(); // registers the public /api/health first
+  app.use(['/api', '/mcp'], requireToken(token));
 
   app.get('/api/devices', (_req, res) => res.json({ adapter: adapter.name, devices: adapter.list() }));
   app.get('/api/alerts', (_req, res) => res.json({ alerts: computeAlerts(adapter.list()) }));
