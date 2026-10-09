@@ -20,6 +20,8 @@ jobs:
             client/package-lock.json
       - name: Install
         run: npm ci && npm --prefix server ci && npm --prefix client ci
+      - name: Formatting
+        run: npm run format:check
       - name: Typecheck
         run: npm run typecheck
       - name: Test

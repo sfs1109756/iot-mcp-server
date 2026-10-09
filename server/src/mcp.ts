@@ -127,7 +127,9 @@ Thresholds: CO2 warning ${THRESHOLDS.co2.warning} ppm / critical ${THRESHOLDS.co
         return {
           room: r,
           air: devices.filter((d) => d.kind === 'air_monitor').map((d) => ({ device: d.id, online: d.online, ...describe(d).readings })),
-          controls: devices.filter((d) => d.kind !== 'air_monitor').map((d) => ({ device: d.id, kind: d.kind, ...d.actuators, online: d.online })),
+          controls: devices
+            .filter((d) => d.kind !== 'air_monitor')
+            .map((d) => ({ device: d.id, kind: d.kind, ...d.actuators, online: d.online })),
           alerts: alerts.filter((a) => a.room === r).map((a) => `[${a.severity}] ${a.message}`),
         };
       });
@@ -140,7 +142,8 @@ Thresholds: CO2 warning ${THRESHOLDS.co2.warning} ppm / critical ${THRESHOLDS.co
     'get_sensor_history',
     {
       title: 'Get sensor history',
-      description: 'Get recent history for one metric of one device, with min/max/avg, a trend (rising/falling/stable) and downsampled points.',
+      description:
+        'Get recent history for one metric of one device, with min/max/avg, a trend (rising/falling/stable) and downsampled points.',
       inputSchema: {
         device_id: z.string(),
         metric: z.enum(METRICS).describe('pm25, pm10, co2, tvoc, temperature, humidity, battery or rssi'),
@@ -245,7 +248,16 @@ Thresholds: CO2 warning ${THRESHOLDS.co2.warning} ppm / critical ${THRESHOLDS.co
       },
       async () => {
         log('list_rules', true, `${rules.list().length} rules`);
-        return text(rules.list().map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, active: r.active, rule: r.description, lastFiredAt: r.lastFiredAt ?? null })));
+        return text(
+          rules.list().map((r) => ({
+            id: r.id,
+            name: r.name,
+            enabled: r.enabled,
+            active: r.active,
+            rule: r.description,
+            lastFiredAt: r.lastFiredAt ?? null,
+          })),
+        );
       },
     );
 
@@ -282,7 +294,9 @@ Thresholds: CO2 warning ${THRESHOLDS.co2.warning} ppm / critical ${THRESHOLDS.co
             name: a.name,
             when: { deviceId: a.sensor_device_id, metric: a.metric, op: a.op, value: a.value, forSeconds: a.for_seconds },
             then: { deviceId: a.target_device_id, command: then },
-            ...(hasClear ? { onClear: { deviceId: a.target_device_id, command: buildCommand(a.action, a.clear_speed, a.clear_mode, a.clear_on) } } : {}),
+            ...(hasClear
+              ? { onClear: { deviceId: a.target_device_id, command: buildCommand(a.action, a.clear_speed, a.clear_mode, a.clear_on) } }
+              : {}),
             createdBy: source,
           });
           log('create_rule', true, describeRule(rule));
@@ -339,14 +353,18 @@ Thresholds: CO2 warning ${THRESHOLDS.co2.warning} ppm / critical ${THRESHOLDS.co
     'fleet',
     'iot://devices',
     { title: 'All devices', description: 'Current state of every device', mimeType: 'application/json' },
-    async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(adapter.list().map(describe), null, 2) }] }),
+    async (uri) => ({
+      contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(adapter.list().map(describe), null, 2) }],
+    }),
   );
 
   server.registerResource(
     'device',
     new ResourceTemplate('iot://devices/{id}', {
       list: async () => ({
-        resources: adapter.list().map((d) => ({ uri: `iot://devices/${d.id}`, name: `${d.room} · ${d.name}`, mimeType: 'application/json' })),
+        resources: adapter
+          .list()
+          .map((d) => ({ uri: `iot://devices/${d.id}`, name: `${d.room} · ${d.name}`, mimeType: 'application/json' })),
       }),
     }),
     { title: 'Device', description: 'Current state of one device', mimeType: 'application/json' },

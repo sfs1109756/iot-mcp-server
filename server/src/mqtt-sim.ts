@@ -11,7 +11,11 @@ import { pathToFileURL } from 'node:url';
 import { SimulatedAdapter } from './devices/simulator.js';
 import type { Command } from './devices/types.js';
 
-export async function runMqttSimulator(url = process.env.MQTT_URL ?? 'mqtt://localhost:1883', prefix = process.env.MQTT_TOPIC_PREFIX ?? 'iot', everyMs = 3000) {
+export async function runMqttSimulator(
+  url = process.env.MQTT_URL ?? 'mqtt://localhost:1883',
+  prefix = process.env.MQTT_TOPIC_PREFIX ?? 'iot',
+  everyMs = 3000,
+) {
   const sim = new SimulatedAdapter();
   await sim.start();
   const clients = sim.list().map((d) => {

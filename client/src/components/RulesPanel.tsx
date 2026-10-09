@@ -36,7 +36,11 @@ export function RulesPanel({ rules, devices }: { rules: Rule[]; devices: DeviceS
         {rules.map((r) => (
           <div key={r.id} className={`rule ${r.enabled ? '' : 'off'} ${r.active ? 'firing' : ''}`}>
             <div className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
-              <button className={`toggle sm ${r.enabled ? 'on' : ''}`} onClick={() => toggle(r)} aria-label={r.enabled ? 'Disable rule' : 'Enable rule'}>
+              <button
+                className={`toggle sm ${r.enabled ? 'on' : ''}`}
+                onClick={() => toggle(r)}
+                aria-label={r.enabled ? 'Disable rule' : 'Enable rule'}
+              >
                 <span />
               </button>
               <div className="grow">
@@ -60,7 +64,11 @@ export function RulesPanel({ rules, devices }: { rules: Rule[]; devices: DeviceS
   );
 }
 
-const ACTION_FOR: Record<string, Command['type']> = { ventilation_fan: 'set_fan_speed', air_purifier: 'set_purifier_mode', relay: 'set_relay' };
+const ACTION_FOR: Record<string, Command['type']> = {
+  ventilation_fan: 'set_fan_speed',
+  air_purifier: 'set_purifier_mode',
+  relay: 'set_relay',
+};
 
 function commandFor(kind: string, value: string): Command {
   const type = ACTION_FOR[kind];
@@ -69,9 +77,29 @@ function commandFor(kind: string, value: string): Command {
   return { type: 'set_relay', on: value === 'on' };
 }
 
-function ValueInput({ kind, value, onChange, allowNone }: { kind: string; value: string; onChange: (v: string) => void; allowNone?: boolean }) {
+function ValueInput({
+  kind,
+  value,
+  onChange,
+  allowNone,
+}: {
+  kind: string;
+  value: string;
+  onChange: (v: string) => void;
+  allowNone?: boolean;
+}) {
   if (kind === 'ventilation_fan')
-    return <input type="number" min={0} max={100} value={value} onChange={(e) => onChange(e.target.value)} placeholder={allowNone ? '— %' : '%'} aria-label="Fan speed %" />;
+    return (
+      <input
+        type="number"
+        min={0}
+        max={100}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={allowNone ? '— %' : '%'}
+        aria-label="Fan speed %"
+      />
+    );
   const options = kind === 'air_purifier' ? ['off', 'auto', 'low', 'medium', 'high'] : ['on', 'off'];
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)} aria-label="Value">
@@ -127,7 +155,8 @@ function RuleForm({ devices, onDone }: { devices: DeviceState[]; onDone: () => v
     setClearValue('');
   };
 
-  if (!sensors.length || !actuators.length) return <p className="small muted">Rules need at least one online sensor and one controllable device.</p>;
+  if (!sensors.length || !actuators.length)
+    return <p className="small muted">Rules need at least one online sensor and one controllable device.</p>;
 
   return (
     <form className="rule-form" onSubmit={submit}>
@@ -156,7 +185,14 @@ function RuleForm({ devices, onDone }: { devices: DeviceState[]; onDone: () => v
         <input type="number" value={threshold} onChange={(e) => setThreshold(e.target.value)} aria-label="Threshold" />
         <span className="small muted">{METRIC_INFO[metric]?.unit}</span>
         <span className="small muted">for</span>
-        <input type="number" min={0} value={forSeconds} onChange={(e) => setForSeconds(e.target.value)} aria-label="Seconds" style={{ width: 70 }} />
+        <input
+          type="number"
+          min={0}
+          value={forSeconds}
+          onChange={(e) => setForSeconds(e.target.value)}
+          aria-label="Seconds"
+          style={{ width: 70 }}
+        />
         <span className="small muted">s</span>
       </div>
       <label>Then</label>

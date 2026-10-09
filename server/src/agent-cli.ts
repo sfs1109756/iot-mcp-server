@@ -44,7 +44,8 @@ async function connect(): Promise<{ client: Client; via: string }> {
 
 function print(e: AgentEvent) {
   if (e.type === 'tool_call') console.log(`${c.cyan}→ ${e.name}${c.reset} ${c.dim}${JSON.stringify(e.args)}${c.reset}`);
-  if (e.type === 'tool_result') console.log(`${e.ok ? c.green + '  ✓' : c.red + '  ✗'} ${c.dim}${e.preview.replace(/\s+/g, ' ').slice(0, 140)}${c.reset}`);
+  if (e.type === 'tool_result')
+    console.log(`${e.ok ? c.green + '  ✓' : c.red + '  ✗'} ${c.dim}${e.preview.replace(/\s+/g, ' ').slice(0, 140)}${c.reset}`);
   if (e.type === 'answer') console.log(`\n${c.bold}${e.text}${c.reset}\n`);
 }
 

@@ -182,11 +182,11 @@ export class SimulatedAdapter implements DeviceAdapter {
       if (r.name === 'R&D Lab' && relay.relayOn) vent += 0.4;
       vent = Math.min(vent, 1);
 
-      const co2Target = 420 + (r.occupancy * 1500) * (1 - vent * 0.8);
+      const co2Target = 420 + r.occupancy * 1500 * (1 - vent * 0.8);
       r.co2 = approach(r.co2, co2Target, dt, 420 / (1 + vent * 4)) + (rnd() - 0.5) * 6;
 
       // Particles: outdoor infiltration + people, minus purifier.
-      let mode = r.name === 'Open Office' ? purifier.purifierMode ?? 'off' : 'off';
+      let mode = r.name === 'Open Office' ? (purifier.purifierMode ?? 'off') : 'off';
       let eff = PURIFIER_EFFECT[mode];
       if (mode === 'auto') eff = r.pm25 > 25 ? 0.8 : r.pm25 > 12 ? 0.55 : 0.35;
       const pmTarget = (r.outdoorPm * 0.45 + r.occupancy * 8) * (1 - eff);

@@ -25,7 +25,11 @@ export function DeviceCard({ device }: { device: DeviceState }) {
   const [error, setError] = useState('');
   const [fanDraft, setFanDraft] = useState<number | null>(null);
   const d = device;
-  const run = (cmd: Record<string, unknown>) => send(d.id, cmd).then(() => setError(''), (e) => setError(e.message));
+  const run = (cmd: Record<string, unknown>) =>
+    send(d.id, cmd).then(
+      () => setError(''),
+      (e) => setError(e.message),
+    );
   const identifying = Boolean(d.meta.identifyUntil);
 
   return (
@@ -74,7 +78,10 @@ export function DeviceCard({ device }: { device: DeviceState }) {
             onPointerUp={() => fanDraft !== null && run({ type: 'set_fan_speed', speed: fanDraft }).then(() => setFanDraft(null))}
             onKeyUp={() => fanDraft !== null && run({ type: 'set_fan_speed', speed: fanDraft }).then(() => setFanDraft(null))}
           />
-          <div className={`fan-anim ${(d.actuators.fanSpeed ?? 0) > 0 ? 'spin' : ''}`} style={{ animationDuration: `${Math.max(0.3, 3 - (d.actuators.fanSpeed ?? 0) / 40)}s` }}>
+          <div
+            className={`fan-anim ${(d.actuators.fanSpeed ?? 0) > 0 ? 'spin' : ''}`}
+            style={{ animationDuration: `${Math.max(0.3, 3 - (d.actuators.fanSpeed ?? 0) / 40)}s` }}
+          >
             🌀
           </div>
         </div>
@@ -84,7 +91,11 @@ export function DeviceCard({ device }: { device: DeviceState }) {
         <div className="control">
           <div className="seg">
             {(['off', 'auto', 'low', 'medium', 'high'] as PurifierMode[]).map((m) => (
-              <button key={m} className={d.actuators.purifierMode === m ? 'active' : ''} onClick={() => run({ type: 'set_purifier_mode', mode: m })}>
+              <button
+                key={m}
+                className={d.actuators.purifierMode === m ? 'active' : ''}
+                onClick={() => run({ type: 'set_purifier_mode', mode: m })}
+              >
                 {m}
               </button>
             ))}
@@ -95,16 +106,23 @@ export function DeviceCard({ device }: { device: DeviceState }) {
 
       {d.online && d.kind === 'relay' && (
         <div className="control row">
-          <button className={`toggle ${d.actuators.relayOn ? 'on' : ''}`} onClick={() => run({ type: 'set_relay', on: !d.actuators.relayOn })}>
+          <button
+            className={`toggle ${d.actuators.relayOn ? 'on' : ''}`}
+            onClick={() => run({ type: 'set_relay', on: !d.actuators.relayOn })}
+          >
             <span />
           </button>
-          <span>{d.actuators.relayOn ? 'ON' : 'OFF'} · {String(d.meta.load ?? 'Relay')}</span>
+          <span>
+            {d.actuators.relayOn ? 'ON' : 'OFF'} · {String(d.meta.load ?? 'Relay')}
+          </span>
         </div>
       )}
 
       {d.online && (
         <div className="device-foot small muted">
-          <span>fw {d.firmware} · {d.readings.rssi} dBm</span>
+          <span>
+            fw {d.firmware} · {d.readings.rssi} dBm
+          </span>
           <button className="link" onClick={() => run({ type: 'identify' })}>
             {identifying ? '💡 blinking…' : 'Identify'}
           </button>

@@ -230,11 +230,7 @@ export function parseStreamLine(provider: Provider, line: string): { text?: stri
  * full text. Throws LLMUnavailableError before the first token if the model can't be used,
  * so routes can still answer with a normal HTTP error.
  */
-export async function chatStream(
-  messages: Message[],
-  onToken: (text: string) => void,
-  opts: ChatOptions = {},
-): Promise<string> {
+export async function chatStream(messages: Message[], onToken: (text: string) => void, opts: ChatOptions = {}): Promise<string> {
   const provider = getProvider();
   const req = buildRequest(messages, opts, true);
   const res = await post(req.url, req.body, req.headers, opts.signal);

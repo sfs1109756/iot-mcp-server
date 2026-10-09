@@ -30,7 +30,9 @@ async function main() {
   console.log(`Tools (${tools.length}): ${tools.map((t) => t.name).join(', ')}`);
   const { resources } = await client.listResources();
   const { resourceTemplates } = await client.listResourceTemplates();
-  console.log(`Resources: ${resources.map((r) => r.uri).join(', ')} | templates: ${resourceTemplates.map((t) => t.uriTemplate).join(', ')}`);
+  console.log(
+    `Resources: ${resources.map((r) => r.uri).join(', ')} | templates: ${resourceTemplates.map((t) => t.uriTemplate).join(', ')}`,
+  );
   const { prompts } = await client.listPrompts();
   console.log(`Prompts: ${prompts.map((p) => p.name).join(', ')}\n`);
 
@@ -41,7 +43,11 @@ async function main() {
     return r.readings.co2 as string;
   };
   console.log(`Conference Room A CO2 before: ${await co2()}`);
-  console.log(textOf(await client.callTool({ name: 'set_fan_speed', arguments: { device_id: 'fan-conf-01', speed: 90, reason: 'demo' } })).split('\n')[2]);
+  console.log(
+    textOf(await client.callTool({ name: 'set_fan_speed', arguments: { device_id: 'fan-conf-01', speed: 90, reason: 'demo' } })).split(
+      '\n',
+    )[2],
+  );
   for (let i = 1; i <= 4; i++) {
     await sleep(1500);
     console.log(`  after ${i * 1.5}s: ${await co2()}`);
@@ -52,7 +58,14 @@ async function main() {
   const offline = await client.callTool({ name: 'identify_device', arguments: { device_id: 'aq-store-01' } });
   console.log(`Offline device is rejected: isError=${offline.isError}`);
 
-  const hist = JSON.parse(textOf(await client.callTool({ name: 'get_sensor_history', arguments: { device_id: 'aq-office-01', metric: 'pm25', minutes: 360, max_points: 6 } })));
+  const hist = JSON.parse(
+    textOf(
+      await client.callTool({
+        name: 'get_sensor_history',
+        arguments: { device_id: 'aq-office-01', metric: 'pm25', minutes: 360, max_points: 6 },
+      }),
+    ),
+  );
   console.log(`\nOpen Office PM2.5, last 6h: min ${hist.min}, max ${hist.max}, avg ${hist.avg}, trend ${hist.trend}`);
 
   const res = await client.readResource({ uri: 'iot://devices/relay-lab-01' });

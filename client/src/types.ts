@@ -64,9 +64,7 @@ export function level(metric: Metric, v: number): 'good' | 'warn' | 'bad' | '' {
 }
 
 export type Command =
-  | { type: 'set_fan_speed'; speed: number }
-  | { type: 'set_purifier_mode'; mode: PurifierMode }
-  | { type: 'set_relay'; on: boolean };
+  { type: 'set_fan_speed'; speed: number } | { type: 'set_purifier_mode'; mode: PurifierMode } | { type: 'set_relay'; on: boolean };
 
 export interface Rule {
   id: string;

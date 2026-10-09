@@ -5,7 +5,9 @@ import net from 'node:net';
  * Optional built-in MQTT broker (MQTT_EMBEDDED_BROKER=true), so ESP32s can connect
  * straight to this server without installing Mosquitto.
  */
-export async function startEmbeddedBroker(port = Number(process.env.MQTT_PORT ?? 1883)): Promise<{ port: number; close: () => Promise<void> }> {
+export async function startEmbeddedBroker(
+  port = Number(process.env.MQTT_PORT ?? 1883),
+): Promise<{ port: number; close: () => Promise<void> }> {
   const broker = await Aedes.createBroker();
   const server = net.createServer(broker.handle);
   await new Promise<void>((resolve, reject) => {

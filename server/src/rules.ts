@@ -121,7 +121,9 @@ export class RuleEngine extends EventEmitter {
     for (const action of [rule.then, rule.onClear].filter(Boolean) as { deviceId: string; command: Command }[]) {
       const target = this.adapter.get(action.deviceId);
       if (!target) return `No device "${action.deviceId}".`;
-      const needs = { set_fan_speed: 'ventilation_fan', set_purifier_mode: 'air_purifier', set_relay: 'relay', identify: null }[action.command.type];
+      const needs = { set_fan_speed: 'ventilation_fan', set_purifier_mode: 'air_purifier', set_relay: 'relay', identify: null }[
+        action.command.type
+      ];
       if (needs && target.kind !== needs) return `${action.deviceId} is a ${target.kind}, it can't ${describeCommand(action.command)}.`;
     }
     return null;
@@ -130,7 +132,12 @@ export class RuleEngine extends EventEmitter {
   create(input: NewRule): Rule {
     const error = this.validate(input);
     if (error) throw new Error(error);
-    const base = input.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'rule';
+    const base =
+      input.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 40) || 'rule';
     let id = base;
     for (let n = 2; this.rules.some((r) => r.id === id); n++) id = `${base}-${n}`;
     const rule: Rule = { ...input, id, enabled: input.enabled ?? true };

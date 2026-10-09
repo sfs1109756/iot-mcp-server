@@ -22,8 +22,24 @@ export function computeAlerts(devices: DeviceState[]): Alert[] {
       const v = r[metric];
       if (v === undefined) return;
       const t = THRESHOLDS[metric];
-      if (v >= t.critical) alerts.push({ deviceId: d.id, room: d.room, severity: 'critical', metric, value: v, message: `${what} is very high in ${d.room}: ${v} ${unit}.` });
-      else if (v >= t.warning) alerts.push({ deviceId: d.id, room: d.room, severity: 'warning', metric, value: v, message: `${what} is elevated in ${d.room}: ${v} ${unit}.` });
+      if (v >= t.critical)
+        alerts.push({
+          deviceId: d.id,
+          room: d.room,
+          severity: 'critical',
+          metric,
+          value: v,
+          message: `${what} is very high in ${d.room}: ${v} ${unit}.`,
+        });
+      else if (v >= t.warning)
+        alerts.push({
+          deviceId: d.id,
+          room: d.room,
+          severity: 'warning',
+          metric,
+          value: v,
+          message: `${what} is elevated in ${d.room}: ${v} ${unit}.`,
+        });
     };
     high('co2', 'ppm', 'CO₂');
     high('pm25', 'µg/m³', 'PM2.5');
@@ -40,7 +56,12 @@ export function computeAlerts(devices: DeviceState[]): Alert[] {
     }
     const filter = Number(d.meta.filterLifePct);
     if (!Number.isNaN(filter) && filter <= THRESHOLDS.filterLifePct.warning) {
-      alerts.push({ deviceId: d.id, room: d.room, severity: filter <= 5 ? 'critical' : 'warning', message: `${d.id} filter life is ${filter}%. Replace soon.` });
+      alerts.push({
+        deviceId: d.id,
+        room: d.room,
+        severity: filter <= 5 ? 'critical' : 'warning',
+        message: `${d.id} filter life is ${filter}%. Replace soon.`,
+      });
     }
   }
   const rank = { critical: 0, warning: 1, info: 2 };

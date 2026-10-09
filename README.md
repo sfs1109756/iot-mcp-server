@@ -8,21 +8,21 @@ An [MCP](https://modelcontextprotocol.io) server that lets AI assistants **monit
 
 <sub>Screenshot: simulated devices after the agent's health check, with the example automation enabled.</sub>
 
-> Ask *"The conference room feels stuffy"* → the agent checks alerts, sees CO₂ at 1,500 ppm, reads the trend, turns the ventilation fan up, and you watch CO₂ fall on the dashboard.
+> Ask _"The conference room feels stuffy"_ → the agent checks alerts, sees CO₂ at 1,500 ppm, reads the trend, turns the ventilation fan up, and you watch CO₂ fall on the dashboard.
 
 ## What's inside
 
-| | |
-|---|---|
-| **13 MCP tools** | `list_devices`, `get_device_status`, `get_room_summary`, `get_sensor_history`, `get_alerts`, `set_fan_speed`, `set_purifier_mode`, `set_relay`, `identify_device`, `list_rules`, `create_rule`, `set_rule_enabled`, `delete_rule` |
-| **Automations** | Rules that keep running without AI: "when CO₂ > 1000 for 30s, fan to 80%; when it clears, back to 30%" |
-| **Resources** | `iot://devices` and `iot://devices/{id}` |
-| **Prompt** | `building_health_check` — investigate, fix, report |
-| **Transports** | stdio (Claude Desktop, Claude Code, Cursor…) and Streamable HTTP at `/mcp` |
-| **Dashboard** | Live device cards (SSE), manual controls, alerts, an activity log of every AI and human action, and an agent chat |
-| **Local agent** | Tool-calling loop on Ollama (or any OpenAI-compatible API) that talks to the server over MCP — CLI and web |
-| **Simulator** | Rooms with occupancy-driven CO₂, outdoor PM, solvent TVOC events; actuators actually change the air |
-| **Real hardware** | ESP32 over **HTTP** or **MQTT** (`DEVICE_ADAPTER=http` / `mqtt`), Arduino sketches for both in `firmware/`, and an optional built-in MQTT broker |
+|                   |                                                                                                                                                                                                                                   |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **13 MCP tools**  | `list_devices`, `get_device_status`, `get_room_summary`, `get_sensor_history`, `get_alerts`, `set_fan_speed`, `set_purifier_mode`, `set_relay`, `identify_device`, `list_rules`, `create_rule`, `set_rule_enabled`, `delete_rule` |
+| **Automations**   | Rules that keep running without AI: "when CO₂ > 1000 for 30s, fan to 80%; when it clears, back to 30%"                                                                                                                            |
+| **Resources**     | `iot://devices` and `iot://devices/{id}`                                                                                                                                                                                          |
+| **Prompt**        | `building_health_check` — investigate, fix, report                                                                                                                                                                                |
+| **Transports**    | stdio (Claude Desktop, Claude Code, Cursor…) and Streamable HTTP at `/mcp`                                                                                                                                                        |
+| **Dashboard**     | Live device cards (SSE), manual controls, alerts, an activity log of every AI and human action, and an agent chat                                                                                                                 |
+| **Local agent**   | Tool-calling loop on Ollama (or any OpenAI-compatible API) that talks to the server over MCP — CLI and web                                                                                                                        |
+| **Simulator**     | Rooms with occupancy-driven CO₂, outdoor PM, solvent TVOC events; actuators actually change the air                                                                                                                               |
+| **Real hardware** | ESP32 over **HTTP** or **MQTT** (`DEVICE_ADAPTER=http` / `mqtt`), Arduino sketches for both in `firmware/`, and an optional built-in MQTT broker                                                                                  |
 
 ## Architecture
 
@@ -106,7 +106,7 @@ Rules watch one sensor metric and command one device — no AI in the loop, so t
 - Fire once when the condition has held for `forSeconds`, then re-arm only after it clears (no re-commanding every tick).
 - Optional **when it clears** action, e.g. return the fan to 30%.
 - Validated against real devices: a rule can't send a fan command to a purifier.
-- Created from the dashboard's **Automations** panel or by an assistant: *"Keep the conference room CO₂ under 1000"* → `create_rule`.
+- Created from the dashboard's **Automations** panel or by an assistant: _"Keep the conference room CO₂ under 1000"_ → `create_rule`.
 - Saved to `server/data/rules.json`; every firing is in the activity log with the reading that triggered it.
 
 An example rule ships disabled — switch it on in the dashboard to watch it work.
@@ -145,13 +145,13 @@ Devices that miss 3 polls are marked offline, and commands to them are refused.
 
 ## Configuration (`server/.env`)
 
-| Variable | Default | |
-|---|---|---|
-| `DEVICE_ADAPTER` | `sim` | `sim`, `http` or `mqtt` |
-| `MQTT_URL` / `MQTT_EMBEDDED_BROKER` | `mqtt://localhost:1883` / `false` | MQTT broker, or run one built in |
-| `SIM_SPEED` | `5` | Simulation speed-up so effects show within ~30s |
-| `PORT` | `3003` | Dashboard + HTTP MCP |
-| `LLM_PROVIDER` / `LLM_MODEL` | `ollama` / `qwen2.5:7b` | For the built-in agent (`ollama` or `openai`) |
+| Variable                            | Default                           |                                                 |
+| ----------------------------------- | --------------------------------- | ----------------------------------------------- |
+| `DEVICE_ADAPTER`                    | `sim`                             | `sim`, `http` or `mqtt`                         |
+| `MQTT_URL` / `MQTT_EMBEDDED_BROKER` | `mqtt://localhost:1883` / `false` | MQTT broker, or run one built in                |
+| `SIM_SPEED`                         | `5`                               | Simulation speed-up so effects show within ~30s |
+| `PORT`                              | `3003`                            | Dashboard + HTTP MCP                            |
+| `LLM_PROVIDER` / `LLM_MODEL`        | `ollama` / `qwen2.5:7b`           | For the built-in agent (`ollama` or `openai`)   |
 
 ## Scripts
 

@@ -57,7 +57,9 @@ const server = http.createServer((req, res) => {
       }
       res.write(`event: message_start\ndata: ${JSON.stringify({ type: 'message_start' })}\n\n`);
       for (const w of words) {
-        res.write(`event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', delta: { type: 'text_delta', text: w } })}\n\n`);
+        res.write(
+          `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', delta: { type: 'text_delta', text: w } })}\n\n`,
+        );
       }
       res.end(`event: message_stop\ndata: ${JSON.stringify({ type: 'message_stop' })}\n\n`);
       return;
@@ -118,7 +120,10 @@ test('unreachable server and disabled AI raise LLMUnavailableError', async () =>
   use('ollama', { OLLAMA_URL: 'http://127.0.0.1:9' });
   await assert.rejects(chat(msgs), LLMUnavailableError);
   use('none');
-  await assert.rejects(chatStream(msgs, () => {}), LLMUnavailableError);
+  await assert.rejects(
+    chatStream(msgs, () => {}),
+    LLMUnavailableError,
+  );
 });
 
 test('parseJSON handles common local-model mistakes', () => {

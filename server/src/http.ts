@@ -7,9 +7,8 @@ import { LLMUnavailableError, checkHealth } from './llm.js';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /** Wraps async route handlers so thrown errors reach the error middleware. */
-export const asyncRoute =
-  (fn: (req: Request, res: Response) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) =>
-    fn(req, res).catch(next);
+export const asyncRoute = (fn: (req: Request, res: Response) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) =>
+  fn(req, res).catch(next);
 
 export class HttpError extends Error {
   constructor(
@@ -76,7 +75,12 @@ export function createApp(): Express {
 export function finishApp(app: Express): void {
   const dist = path.resolve(here, '../../client/dist');
   if (fs.existsSync(dist)) {
-    app.use(express.static(dist, { maxAge: '1h', setHeaders: (res, file) => file.endsWith('index.html') && res.setHeader('cache-control', 'no-cache') }));
+    app.use(
+      express.static(dist, {
+        maxAge: '1h',
+        setHeaders: (res, file) => file.endsWith('index.html') && res.setHeader('cache-control', 'no-cache'),
+      }),
+    );
     app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(path.join(dist, 'index.html')));
   }
 

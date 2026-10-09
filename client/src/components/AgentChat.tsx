@@ -92,7 +92,12 @@ export function AgentChat({ aiReady }: { aiReady: boolean }) {
         A local model uses this server's MCP tools to inspect and control devices. Watch the cards update as it works.
       </p>
       <form onSubmit={ask} className="row agent-form">
-        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. Fix the air in the lab" disabled={busy || !aiReady} />
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="e.g. Fix the air in the lab"
+          disabled={busy || !aiReady}
+        />
         <button disabled={busy || !aiReady || !input.trim()}>{busy ? <span className="spinner" /> : 'Send'}</button>
       </form>
       {!aiReady && <p className="small muted">Start Ollama to use the agent. Manual controls and MCP clients still work.</p>}
@@ -124,9 +129,13 @@ export function AgentChat({ aiReady }: { aiReady: boolean }) {
             </ol>
             {t.events.map((e, j) =>
               e.type === 'answer' ? (
-                <div key={j} className="t-answer prose">{e.text}</div>
+                <div key={j} className="t-answer prose">
+                  {e.text}
+                </div>
               ) : e.type === 'error' ? (
-                <div key={j} className="error small">{e.message}</div>
+                <div key={j} className="error small">
+                  {e.message}
+                </div>
               ) : null,
             )}
             {!t.done && (

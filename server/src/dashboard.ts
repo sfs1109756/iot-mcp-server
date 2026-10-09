@@ -49,7 +49,13 @@ export function createDashboard(adapter: DeviceAdapter, rules?: RuleEngine): Exp
       if (!b.name || !b.when || !b.then) throw new Error('A rule needs a name, a condition and an action.');
       const rule = rules.create({
         name: String(b.name).slice(0, 80),
-        when: { deviceId: b.when.deviceId, metric: b.when.metric, op: b.when.op === '<' ? '<' : '>', value: Number(b.when.value), forSeconds: Math.max(0, Number(b.when.forSeconds) || 0) },
+        when: {
+          deviceId: b.when.deviceId,
+          metric: b.when.metric,
+          op: b.when.op === '<' ? '<' : '>',
+          value: Number(b.when.value),
+          forSeconds: Math.max(0, Number(b.when.forSeconds) || 0),
+        },
         then: { deviceId: b.then.deviceId, command: b.then.command },
         ...(b.onClear ? { onClear: { deviceId: b.onClear.deviceId, command: b.onClear.command } } : {}),
         enabled: true,

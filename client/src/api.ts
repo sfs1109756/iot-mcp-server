@@ -37,7 +37,12 @@ export interface StreamDone {
  * POSTs and reads an NDJSON token stream (see server/src/stream.ts).
  * Calls onToken with the text so far; resolves with the final "done" event.
  */
-export async function streamPost(url: string, body: unknown, onText: (textSoFar: string) => void, signal?: AbortSignal): Promise<StreamDone> {
+export async function streamPost(
+  url: string,
+  body: unknown,
+  onText: (textSoFar: string) => void,
+  signal?: AbortSignal,
+): Promise<StreamDone> {
   const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal });
   if (!res.ok || !res.body) {
     const data = await res.json().catch(() => ({}));

@@ -15,8 +15,30 @@ function fakeFleet() {
   let co2 = 600;
   const sent: { id: string; command: Command }[] = [];
   const devices = (): DeviceState[] => [
-    { id: 'aq', name: 'Monitor', kind: 'air_monitor', room: 'Room', firmware: '1', online: true, lastSeen: '', readings: { co2 }, actuators: {}, meta: {} },
-    { id: 'fan', name: 'Fan', kind: 'ventilation_fan', room: 'Room', firmware: '1', online: true, lastSeen: '', readings: {}, actuators: { fanSpeed: 20 }, meta: {} },
+    {
+      id: 'aq',
+      name: 'Monitor',
+      kind: 'air_monitor',
+      room: 'Room',
+      firmware: '1',
+      online: true,
+      lastSeen: '',
+      readings: { co2 },
+      actuators: {},
+      meta: {},
+    },
+    {
+      id: 'fan',
+      name: 'Fan',
+      kind: 'ventilation_fan',
+      room: 'Room',
+      firmware: '1',
+      online: true,
+      lastSeen: '',
+      readings: {},
+      actuators: { fanSpeed: 20 },
+      meta: {},
+    },
   ];
   const adapter: DeviceAdapter = {
     name: 'fake',
@@ -98,14 +120,35 @@ test('an AI can manage rules through MCP tools', async () => {
 
   const created = await client.callTool({
     name: 'create_rule',
-    arguments: { name: 'CO2 guard', sensor_device_id: 'aq', metric: 'co2', op: '>', value: 1000, target_device_id: 'fan', action: 'set_fan_speed', speed: 80, clear_speed: 20 },
+    arguments: {
+      name: 'CO2 guard',
+      sensor_device_id: 'aq',
+      metric: 'co2',
+      op: '>',
+      value: 1000,
+      target_device_id: 'fan',
+      action: 'set_fan_speed',
+      speed: 80,
+      clear_speed: 20,
+    },
   });
   assert.ok(!created.isError, JSON.stringify(created.content));
   const rule = engine.list().find((r) => r.name === 'CO2 guard')!;
   assert.equal(rule.onClear?.command.type, 'set_fan_speed');
   assert.equal(rule.when.forSeconds, 30, 'default hold time');
 
-  const missing = await client.callTool({ name: 'create_rule', arguments: { name: 'x y z', sensor_device_id: 'aq', metric: 'co2', op: '>', value: 1, target_device_id: 'fan', action: 'set_fan_speed' } });
+  const missing = await client.callTool({
+    name: 'create_rule',
+    arguments: {
+      name: 'x y z',
+      sensor_device_id: 'aq',
+      metric: 'co2',
+      op: '>',
+      value: 1,
+      target_device_id: 'fan',
+      action: 'set_fan_speed',
+    },
+  });
   assert.equal(missing.isError, true);
 
   await client.callTool({ name: 'set_rule_enabled', arguments: { rule_id: rule.id, enabled: false } });
