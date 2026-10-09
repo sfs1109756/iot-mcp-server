@@ -4,20 +4,25 @@ An [MCP](https://modelcontextprotocol.io) server that lets AI assistants **monit
 
 ![CI](https://github.com/sfs1109756/iot-mcp-server/actions/workflows/ci.yml/badge.svg)
 
+![Dashboard with the agent fixing problems and an automation rule](docs/screenshot-dashboard.png)
+
+<sub>Screenshot: simulated devices after the agent's health check, with the example automation enabled.</sub>
+
 > Ask *"The conference room feels stuffy"* → the agent checks alerts, sees CO₂ at 1,500 ppm, reads the trend, turns the ventilation fan up, and you watch CO₂ fall on the dashboard.
 
 ## What's inside
 
 | | |
 |---|---|
-| **9 MCP tools** | `list_devices`, `get_device_status`, `get_room_summary`, `get_sensor_history`, `get_alerts`, `set_fan_speed`, `set_purifier_mode`, `set_relay`, `identify_device` |
+| **13 MCP tools** | `list_devices`, `get_device_status`, `get_room_summary`, `get_sensor_history`, `get_alerts`, `set_fan_speed`, `set_purifier_mode`, `set_relay`, `identify_device`, `list_rules`, `create_rule`, `set_rule_enabled`, `delete_rule` |
+| **Automations** | Rules that keep running without AI: "when CO₂ > 1000 for 30s, fan to 80%; when it clears, back to 30%" |
 | **Resources** | `iot://devices` and `iot://devices/{id}` |
 | **Prompt** | `building_health_check` — investigate, fix, report |
 | **Transports** | stdio (Claude Desktop, Claude Code, Cursor…) and Streamable HTTP at `/mcp` |
 | **Dashboard** | Live device cards (SSE), manual controls, alerts, an activity log of every AI and human action, and an agent chat |
 | **Local agent** | Tool-calling loop on Ollama (or any OpenAI-compatible API) that talks to the server over MCP — CLI and web |
 | **Simulator** | Rooms with occupancy-driven CO₂, outdoor PM, solvent TVOC events; actuators actually change the air |
-| **Real hardware** | `DEVICE_ADAPTER=http` + the Arduino sketch in `firmware/` |
+| **Real hardware** | ESP32 over **HTTP** or **MQTT** (`DEVICE_ADAPTER=http` / `mqtt`), Arduino sketches for both in `firmware/`, and an optional built-in MQTT broker |
 
 ## Architecture
 
@@ -30,8 +35,10 @@ flowchart LR
   end
   S[MCP server<br/>tools · resources · prompts] --> A
   D[Express dashboard API] --> A
+  R[Rule engine] --> A
   A{{Device adapter}} --> SIM[Simulator]
-  A --> HTTP[ESP32 HTTP adapter] --> E1[ESP32] & E2[ESP32]
+  A --> HTTP[HTTP adapter] --> E1[ESP32]
+  A --> MQ[MQTT adapter] --> B[(Broker)] --> E2[ESP32]
 ```
 
 One process serves MCP over stdio **and** the dashboard, sharing the same device state — so when Claude Desktop changes a fan, you see it live in the browser.
@@ -92,13 +99,42 @@ Restart Claude Desktop, then open http://localhost:3003 to watch what Claude doe
 npm run build && npm --prefix server run inspect
 ```
 
+## Automations
+
+Rules watch one sensor metric and command one device — no AI in the loop, so they keep working when the model is off.
+
+- Fire once when the condition has held for `forSeconds`, then re-arm only after it clears (no re-commanding every tick).
+- Optional **when it clears** action, e.g. return the fan to 30%.
+- Validated against real devices: a rule can't send a fan command to a purifier.
+- Created from the dashboard's **Automations** panel or by an assistant: *"Keep the conference room CO₂ under 1000"* → `create_rule`.
+- Saved to `server/data/rules.json`; every firing is in the activity log with the reading that triggered it.
+
+An example rule ships disabled — switch it on in the dashboard to watch it work.
+
 ## Real ESP32 devices
 
-1. Flash `firmware/esp32_http/esp32_http.ino` (ArduinoJson v7). Set Wi-Fi, `DEVICE_KIND` and `DEVICE_ROOM`, and swap the sensor stubs for your SCD40 / PMS5003 / SGP40 / SHT4x drivers.
-2. Copy `server/devices.example.json` to `server/devices.json` with your device IPs.
-3. Set `DEVICE_ADAPTER=http` in `server/.env`.
+### Over MQTT (recommended)
 
-Device contract: `GET /status` returns readings/actuators as JSON, `POST /command` accepts `{ "type": "set_fan_speed", "speed": 60 }` and friends. Devices that miss 3 polls are marked offline, and commands to them are refused.
+1. Flash `firmware/esp32_mqtt/esp32_mqtt.ino` (PubSubClient + ArduinoJson v7). Set Wi-Fi, `MQTT_HOST`, `DEVICE_ID`, `DEVICE_KIND` and `DEVICE_ROOM`, and swap the sensor stubs for your SCD40 / PMS5003 / SGP40 / SHT4x drivers.
+2. In `server/.env`: `DEVICE_ADAPTER=mqtt`, and either point `MQTT_URL` at your broker (Mosquitto, EMQX, HiveMQ…) or set `MQTT_EMBEDDED_BROKER=true` to run one inside this server on port 1883.
+
+Topics (prefix `iot`): devices publish `iot/<id>/status` (JSON, retained) and `iot/<id>/online` (Last Will `false`); the server publishes commands to `iot/<id>/command` with a `requestId` and waits for `iot/<id>/ack`. Devices silent for 60s are shown offline.
+
+No hardware yet? Run the simulated building as MQTT devices:
+
+```bash
+# terminal 1: server with its own broker
+DEVICE_ADAPTER=mqtt MQTT_EMBEDDED_BROKER=true npm run dev
+# terminal 2: seven simulated ESP32s
+npm --prefix server run sim:mqtt
+```
+
+### Over HTTP
+
+1. Flash `firmware/esp32_http/esp32_http.ino`. Each device serves `GET /status` and `POST /command`.
+2. Copy `server/devices.example.json` to `server/devices.json` with your device IPs, and set `DEVICE_ADAPTER=http`.
+
+Devices that miss 3 polls are marked offline, and commands to them are refused.
 
 ## Safety
 
@@ -111,14 +147,15 @@ Device contract: `GET /status` returns readings/actuators as JSON, `POST /comman
 
 | Variable | Default | |
 |---|---|---|
-| `DEVICE_ADAPTER` | `sim` | `sim` or `http` |
+| `DEVICE_ADAPTER` | `sim` | `sim`, `http` or `mqtt` |
+| `MQTT_URL` / `MQTT_EMBEDDED_BROKER` | `mqtt://localhost:1883` / `false` | MQTT broker, or run one built in |
 | `SIM_SPEED` | `5` | Simulation speed-up so effects show within ~30s |
 | `PORT` | `3003` | Dashboard + HTTP MCP |
 | `LLM_PROVIDER` / `LLM_MODEL` | `ollama` / `qwen2.5:7b` | For the built-in agent (`ollama` or `openai`) |
 
 ## Scripts
 
-`npm run dev` · `npm run build` · `npm test` · `npm --prefix server run demo | agent | inspect`
+`npm run dev` · `npm run build` · `npm test` · `npm --prefix server run demo | agent | inspect | sim:mqtt`
 
 ## License
 
