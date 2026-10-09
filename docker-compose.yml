@@ -1,0 +1,25 @@
+# App + a local Ollama model server. After the first start, pull the model once:
+#   docker compose exec ollama ollama pull qwen2.5:7b
+services:
+  app:
+    build: .
+    ports:
+      - "3003:3003"
+    environment:
+      LLM_PROVIDER: ollama
+      OLLAMA_URL: http://ollama:11434
+      LLM_MODEL: qwen2.5:7b
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ollama:

@@ -1,0 +1,5 @@
+[
+  { "id": "aq-conf-01", "baseUrl": "http://192.168.1.41" },
+  { "id": "fan-conf-01", "baseUrl": "http://192.168.1.42" },
+  { "id": "relay-lab-01", "baseUrl": "http://192.168.1.43" }
+]
