@@ -14,6 +14,29 @@ const SUGGESTIONS = [
   'Which devices need a technician?',
 ];
 
+type CallEvent = Extract<AgentEvent, { type: 'tool_call' }>;
+type ResultEvent = Extract<AgentEvent, { type: 'tool_result' }>;
+
+/** Pairs each tool call with the result that followed it. */
+function pairSteps(events: AgentEvent[]) {
+  const steps: { call: CallEvent; result?: ResultEvent }[] = [];
+  for (const e of events) {
+    if (e.type === 'tool_call') steps.push({ call: e });
+    else if (e.type === 'tool_result') {
+      const open = steps.find((s) => !s.result && s.call.name === e.name);
+      if (open) open.result = e;
+    }
+  }
+  return steps;
+}
+
+/** Short, readable argument summary: device_id first, reason left out. */
+function argSummary(args: Record<string, unknown>): string {
+  const { device_id, reason: _reason, ...rest } = args;
+  const parts = [device_id ? String(device_id) : '', ...Object.entries(rest).map(([k, v]) => `${k}=${String(v)}`)];
+  return parts.filter(Boolean).join(' · ');
+}
+
 /** Chat with the local-model agent. Streams each MCP tool call as it happens. */
 export function AgentChat({ aiReady }: { aiReady: boolean }) {
   const [input, setInput] = useState('');
@@ -86,26 +109,26 @@ export function AgentChat({ aiReady }: { aiReady: boolean }) {
         {turns.map((t, i) => (
           <div key={turns.length - i} className="turn">
             <div className="t-q">{t.question}</div>
-            {t.events.map((e, j) => {
-              if (e.type === 'tool_call')
-                return (
-                  <div key={j} className="t-tool">
-                    <code>→ {e.name}</code> <span className="muted">{JSON.stringify(e.args)}</span>
-                  </div>
-                );
-              if (e.type === 'tool_result')
-                return (
-                  <div key={j} className={`t-result ${e.ok ? 'ok' : 'bad'}`}>
-                    {e.ok ? '✓' : '✗'} {e.preview.replace(/\s+/g, ' ').slice(0, 160)}
-                  </div>
-                );
-              if (e.type === 'answer') return <div key={j} className="t-answer prose">{e.text}</div>;
-              return (
-                <div key={j} className="error small">
-                  {e.message}
-                </div>
-              );
-            })}
+            <ol className="steps">
+              {pairSteps(t.events).map((step, j) => (
+                <li key={j} className={step.result ? (step.result.ok ? 'ok' : 'bad') : 'pending'}>
+                  <details>
+                    <summary>
+                      <span className="step-icon">{step.result ? (step.result.ok ? '✓' : '✗') : '…'}</span>
+                      <code>{step.call.name}</code> <span className="muted">{argSummary(step.call.args)}</span>
+                    </summary>
+                    {step.result && <pre className="step-result">{step.result.preview}</pre>}
+                  </details>
+                </li>
+              ))}
+            </ol>
+            {t.events.map((e, j) =>
+              e.type === 'answer' ? (
+                <div key={j} className="t-answer prose">{e.text}</div>
+              ) : e.type === 'error' ? (
+                <div key={j} className="error small">{e.message}</div>
+              ) : null,
+            )}
             {!t.done && (
               <div className="small muted">
                 <span className="spinner" />

@@ -30,9 +30,14 @@ export function Sparkline({ deviceId, metric, minutes = 120 }: { deviceId: strin
     .map((v, i) => `${i === 0 ? 'M' : 'L'}${((i / (points.length - 1)) * w).toFixed(1)},${(h - 3 - ((v - min) / span) * (h - 6)).toFixed(1)}`)
     .join(' ');
   return (
+    <div className="spark-wrap">
     <svg className="spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-label={`${metric} trend, last ${minutes} minutes`}>
       <path d={`${d} L${w},${h} L0,${h} Z`} fill="var(--accent-soft)" stroke="none" />
       <path d={d} fill="none" stroke="var(--accent)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
     </svg>
+      <span className="spark-range">
+        {Math.round(min)}–{Math.round(max)}
+      </span>
+    </div>
   );
 }
