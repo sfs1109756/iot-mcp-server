@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { ActivityEntry, Alert, DeviceState } from './types';
+import type { ActivityEntry, Alert, DeviceState, Rule } from './types';
 
 /** Subscribes to the server's SSE stream for live device state, alerts and activity. */
 export function useLive() {
   const [devices, setDevices] = useState<DeviceState[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [rules, setRules] = useState<Rule[]>([]);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -23,6 +24,7 @@ export function useLive() {
       setAlerts(data.alerts);
       setConnected(true);
     });
+    es.addEventListener('rules', (e) => setRules(JSON.parse((e as MessageEvent).data).rules));
     es.addEventListener('activity', (e) => {
       const entry = JSON.parse((e as MessageEvent).data) as ActivityEntry;
       setActivity((a) => [entry, ...a].slice(0, 100));
@@ -30,5 +32,5 @@ export function useLive() {
     return () => es.close();
   }, []);
 
-  return { devices, alerts, activity, connected };
+  return { devices, alerts, activity, rules, connected };
 }

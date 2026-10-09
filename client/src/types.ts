@@ -25,7 +25,7 @@ export interface Alert {
 
 export interface ActivityEntry {
   at: string;
-  source: 'mcp' | 'agent' | 'dashboard' | 'system';
+  source: 'mcp' | 'agent' | 'dashboard' | 'rule' | 'system';
   action: string;
   ok: boolean;
   detail: string;
@@ -61,4 +61,22 @@ export function level(metric: Metric, v: number): 'good' | 'warn' | 'bad' | '' {
     default:
       return '';
   }
+}
+
+export type Command =
+  | { type: 'set_fan_speed'; speed: number }
+  | { type: 'set_purifier_mode'; mode: PurifierMode }
+  | { type: 'set_relay'; on: boolean };
+
+export interface Rule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  active: boolean;
+  description: string;
+  when: { deviceId: string; metric: Metric; op: '>' | '<'; value: number; forSeconds: number };
+  then: { deviceId: string; command: Command };
+  onClear?: { deviceId: string; command: Command };
+  createdBy: string;
+  lastFiredAt?: string;
 }

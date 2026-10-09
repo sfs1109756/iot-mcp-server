@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { activity } from './activity.js';
 import { computeAlerts, THRESHOLDS } from './devices/alerts.js';
 import { METRIC_INFO, type Command, type DeviceAdapter, type DeviceState, type Metric } from './devices/types.js';
+import { describeRule, type RuleEngine } from './rules.js';
 
 const METRICS = Object.keys(METRIC_INFO) as [Metric, ...Metric[]];
 
@@ -59,7 +60,7 @@ function summarizeHistory(points: { t: string; v: number }[], maxPoints: number)
   };
 }
 
-export function createMcpServer(adapter: DeviceAdapter, source: Source = 'mcp'): McpServer {
+export function createMcpServer(adapter: DeviceAdapter, source: Source = 'mcp', rules?: RuleEngine): McpServer {
   const server = new McpServer(
     { name: 'iot-devices', version: '1.0.0' },
     {
@@ -218,6 +219,119 @@ Thresholds: CO2 warning ${THRESHOLDS.co2.warning} ppm / critical ${THRESHOLDS.co
     },
     async ({ device_id }) => runCommand(device_id, { type: 'identify' }, 'identify_device'),
   );
+
+  // ---------------- automation rules ----------------
+
+  if (rules) {
+    const buildCommand = (action: string, speed?: number, mode?: string, on?: boolean): Command => {
+      if (action === 'set_fan_speed') {
+        if (speed === undefined) throw new Error('set_fan_speed needs a speed (0–100).');
+        return { type: 'set_fan_speed', speed };
+      }
+      if (action === 'set_purifier_mode') {
+        if (!mode) throw new Error('set_purifier_mode needs a mode.');
+        return { type: 'set_purifier_mode', mode: mode as 'off' | 'auto' | 'low' | 'medium' | 'high' };
+      }
+      if (on === undefined) throw new Error('set_relay needs on=true or on=false.');
+      return { type: 'set_relay', on };
+    };
+
+    server.registerTool(
+      'list_rules',
+      {
+        title: 'List automation rules',
+        description: 'List the automation rules that run without AI, e.g. "when CO2 > 1000 for 30s, set the fan to 80%".',
+        annotations: { readOnlyHint: true },
+      },
+      async () => {
+        log('list_rules', true, `${rules.list().length} rules`);
+        return text(rules.list().map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, active: r.active, rule: r.description, lastFiredAt: r.lastFiredAt ?? null })));
+      },
+    );
+
+    const mode = z.enum(['off', 'auto', 'low', 'medium', 'high']);
+    server.registerTool(
+      'create_rule',
+      {
+        title: 'Create automation rule',
+        description:
+          'Create a rule that keeps working without AI: when a sensor metric crosses a threshold for some seconds, send a command; optionally send another command when it clears. Use list_devices for ids.',
+        inputSchema: {
+          name: z.string().min(3).describe('Short human-readable name'),
+          sensor_device_id: z.string().describe('Device whose reading is watched, e.g. "aq-conf-01"'),
+          metric: z.enum(METRICS),
+          op: z.enum(['>', '<']),
+          value: z.number(),
+          for_seconds: z.number().int().min(0).max(3600).default(30).describe('How long the condition must hold before acting'),
+          target_device_id: z.string().describe('Device to control, e.g. "fan-conf-01"'),
+          action: z.enum(['set_fan_speed', 'set_purifier_mode', 'set_relay']),
+          speed: z.number().int().min(0).max(100).optional(),
+          mode: mode.optional(),
+          on: z.boolean().optional(),
+          clear_speed: z.number().int().min(0).max(100).optional().describe('Fan speed to restore when the condition clears'),
+          clear_mode: mode.optional().describe('Purifier mode to restore when the condition clears'),
+          clear_on: z.boolean().optional().describe('Relay state to restore when the condition clears'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
+      },
+      async (a) => {
+        try {
+          const then = buildCommand(a.action, a.speed, a.mode, a.on);
+          const hasClear = a.clear_speed !== undefined || a.clear_mode !== undefined || a.clear_on !== undefined;
+          const rule = rules.create({
+            name: a.name,
+            when: { deviceId: a.sensor_device_id, metric: a.metric, op: a.op, value: a.value, forSeconds: a.for_seconds },
+            then: { deviceId: a.target_device_id, command: then },
+            ...(hasClear ? { onClear: { deviceId: a.target_device_id, command: buildCommand(a.action, a.clear_speed, a.clear_mode, a.clear_on) } } : {}),
+            createdBy: source,
+          });
+          log('create_rule', true, describeRule(rule));
+          return text({ ok: true, id: rule.id, rule: describeRule(rule) });
+        } catch (err) {
+          log('create_rule', false, (err as Error).message);
+          return fail((err as Error).message);
+        }
+      },
+    );
+
+    server.registerTool(
+      'set_rule_enabled',
+      {
+        title: 'Enable or disable a rule',
+        description: 'Turn an automation rule on or off by id (see list_rules).',
+        inputSchema: { rule_id: z.string(), enabled: z.boolean() },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+      },
+      async ({ rule_id, enabled }) => {
+        try {
+          const r = rules.setEnabled(rule_id, enabled);
+          log('set_rule_enabled', true, `${r.name}: ${enabled ? 'enabled' : 'disabled'}`);
+          return text({ ok: true, id: r.id, enabled: r.enabled });
+        } catch (err) {
+          return fail((err as Error).message);
+        }
+      },
+    );
+
+    server.registerTool(
+      'delete_rule',
+      {
+        title: 'Delete a rule',
+        description: 'Permanently delete an automation rule by id. Prefer set_rule_enabled=false unless the user asked to delete it.',
+        inputSchema: { rule_id: z.string() },
+        annotations: { readOnlyHint: false, destructiveHint: true },
+      },
+      async ({ rule_id }) => {
+        try {
+          rules.remove(rule_id);
+          log('delete_rule', true, rule_id);
+          return text({ ok: true });
+        } catch (err) {
+          return fail((err as Error).message);
+        }
+      },
+    );
+  }
 
   // ---------------- resources ----------------
 

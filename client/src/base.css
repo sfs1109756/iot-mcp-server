@@ -86,7 +86,7 @@ label.file input { display: none; }
 .chip.good { background: var(--good-soft); color: var(--good); border-color: transparent; }
 .chip.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
 .chip.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
-.chip.btn { cursor: pointer; background: var(--panel); }
+.chip.btn { cursor: pointer; background: var(--panel); color: var(--text); font-weight: 400; text-align: left; }
 .chip.btn:hover { background: var(--accent-soft); }
 .status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel); }
 .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }

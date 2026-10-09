@@ -81,3 +81,17 @@ code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-si
 .spark-wrap { position: relative; }
 .spark-range { position: absolute; top: 0; right: 0; font-size: 10px; color: var(--muted); background: var(--panel); padding: 0 3px; border-radius: 3px; opacity: 0.9; }
 @media (max-width: 1000px) { .layout aside { order: -1; } }
+.src-rule { background: var(--warn-soft); color: var(--warn); }
+.rule-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.rule { border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.rule.off { opacity: 0.6; }
+.rule.firing { border-color: var(--good); background: var(--good-soft); }
+.rule-name { font-weight: 600; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.toggle.sm { width: 36px; height: 20px; padding: 2px; flex-shrink: 0; margin-top: 2px; }
+.toggle.sm span { width: 16px; height: 16px; }
+.toggle.sm.on span { transform: translateX(16px); }
+.rule-form { display: flex; flex-direction: column; gap: 8px; border: 1px dashed var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+.rule-form label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.rf-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.rf-row select, .rf-row input { width: auto; padding: 6px 8px; font-size: 14px; }
+.rf-row input[type='number'] { width: 90px; }

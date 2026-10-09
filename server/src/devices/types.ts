@@ -66,7 +66,7 @@ export interface CommandResult {
 
 export interface ActivityEntry {
   at: string;
-  source: 'mcp' | 'agent' | 'dashboard' | 'system';
+  source: 'mcp' | 'agent' | 'dashboard' | 'rule' | 'system';
   action: string;
   ok: boolean;
   detail: string;

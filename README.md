@@ -94,7 +94,7 @@ npm run build && npm --prefix server run inspect
 
 ## Real ESP32 devices
 
-1. Flash `firmware/esp32_device/esp32_device.ino` (ArduinoJson v7). Set Wi-Fi, `DEVICE_KIND` and `DEVICE_ROOM`, and swap the sensor stubs for your SCD40 / PMS5003 / SGP40 / SHT4x drivers.
+1. Flash `firmware/esp32_http/esp32_http.ino` (ArduinoJson v7). Set Wi-Fi, `DEVICE_KIND` and `DEVICE_ROOM`, and swap the sensor stubs for your SCD40 / PMS5003 / SGP40 / SHT4x drivers.
 2. Copy `server/devices.example.json` to `server/devices.json` with your device IPs.
 3. Set `DEVICE_ADAPTER=http` in `server/.env`.
 

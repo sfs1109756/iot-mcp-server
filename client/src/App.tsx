@@ -1,13 +1,14 @@
 import { AiStatus, useHealth } from './components/AiStatus';
 import { AgentChat } from './components/AgentChat';
 import { DeviceCard } from './components/DeviceCard';
+import { RulesPanel } from './components/RulesPanel';
 import { useLive } from './useLive';
 
-const SOURCE_LABEL = { mcp: 'MCP client', agent: 'Agent', dashboard: 'You', system: 'System' } as const;
+const SOURCE_LABEL = { mcp: 'MCP client', agent: 'Agent', dashboard: 'You', rule: 'Rule', system: 'System' } as const;
 
 export default function App() {
   const health = useHealth();
-  const { devices, alerts, activity, connected } = useLive();
+  const { devices, alerts, activity, rules, connected } = useLive();
 
   const rooms = [...new Set(devices.map((d) => d.room))];
 
@@ -55,6 +56,7 @@ export default function App() {
 
         <aside className="stack">
           <AgentChat aiReady={Boolean(health?.ok)} />
+          <RulesPanel rules={rules} devices={devices} />
           <div className="panel">
             <h2>📜 Activity</h2>
             <div className="feed">

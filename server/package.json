@@ -12,12 +12,15 @@
     "agent:prod": "node dist/agent-cli.js",
     "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
     "demo": "tsx src/demo-client.ts",
-    "test": "node --import tsx --test \"src/**/*.test.ts\""
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "sim:mqtt": "tsx src/mqtt-sim.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
+    "aedes": "^1.2.0",
     "dotenv": "^18.0.6",
     "express": "^4.22.3",
+    "mqtt": "^5.16.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

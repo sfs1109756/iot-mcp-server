@@ -5,3 +5,4 @@ dist/
 server/devices.json
 *.log
 .DS_Store
+server/data/
