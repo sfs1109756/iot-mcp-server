@@ -161,6 +161,8 @@ Devices that miss 3 polls are marked offline, and commands to them are refused.
 
 `npm run dev` · `npm run build` · `npm test` · `npm --prefix server run demo | agent | inspect | sim:mqtt`
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/sfs1109756/iot-mcp-server)](https://m8ven.ai/mcp/sfs1109756/iot-mcp-server?s=readme)
+
 ## License
 
 MIT © Faisal
